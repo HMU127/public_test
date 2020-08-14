@@ -1,0 +1,55 @@
+name: Build LaTeX document and send to me
+
+on:
+  push:
+    paths:
+      - 'manuscripts/**'
+      - 'README.md'
+    branches:
+      - master
+    tags:
+      - v*
+  pull_request:
+    branches:
+      - master
+    tags:
+      - v*
+  release:
+    types: [published,prereleased]
+
+
+jobs:
+
+  pdf-build:
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Set up Git repository
+        uses: actions/checkout@v1
+      - name: Compile LaTeX document
+        uses: xu-cheng/latex-action@master
+        with:
+          working_directory: manuscripts/
+          root_file: ./main.tex
+      - name: set python 
+        uses: actions/setup-python@v1 
+        with:
+          python-version: '3.6'
+          architecture: 'x64'
+      - name: readme 2 html 
+        run: |
+          pip3 install markdown2
+          markdown2 -x tables README.md > readme.html
+      - name: Send mail
+        uses: dawidd6/action-send-mail@v2
+        with:
+          server_address: smtp.mxhichina.com
+          server_port: 465
+          username: ${{secrets.email}}
+          password: ${{secrets.emailpasswd}}
+          subject: ${{github.repository}} manuscript update
+          body: file://README.md
+          to: ${{secrets.emailto}}
+          from: Project_Updater
+          content_type: text/html
+          attachments: manuscripts/main.pdf
+          

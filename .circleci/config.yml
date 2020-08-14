@@ -1,0 +1,39 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: continuumio/miniconda3:4.7.12
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+      - run:
+          name: "create tests environment"
+          command: |
+            echo 'test'
+      - save_cache:
+          key: v1-conda-environments-{{ checksum "README.md" }}
+          paths:
+            - /opt/conda/envs/tests
+
+  test:
+    docker:
+      - image: continuumio/miniconda3:4.7.12
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+      - restore_cache:
+          key: v1-conda-environments-{{ checksum "README.md" }}
+      - run:
+          name: "test"
+          command: |
+            echo 'good'
+workflows:
+  version: 2
+  build-test-and-deploy:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
